@@ -3,10 +3,6 @@ import { NextResponse } from 'next/server';
 import prisma from '../../../utils/prisma';
 
 
-
-// import prisma from '../../../utils/prisma';
-
-
 export async function GET() {
   const movies = await prisma.movie.findMany();
   return NextResponse.json(movies);

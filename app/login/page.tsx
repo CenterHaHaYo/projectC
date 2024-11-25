@@ -19,11 +19,11 @@ export default function LoginPage() {
 
     if (res.ok) {
       const { token } = await res.json();
-      localStorage.setItem('token', token);
-      router.push('/collection');
+      localStorage.setItem('token', token);// เก็บ token ใน Local Storage
+      router.push('/collection');// ย้ายไปหน้า collection
     } else {
       const { error } = await res.json();
-      setError(error || 'Login failed');
+      setError(error || 'Login failed');// แสดงข้อความ error
     }
   };
 

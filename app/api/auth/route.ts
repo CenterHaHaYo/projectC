@@ -14,15 +14,16 @@ export async function POST(req: Request) {
   const user = await prisma.user.findUnique({
     where: { email },
   });
-
+  //ตรวจสอบรหัสผ่าน
   if (!user || !(await bcrypt.compare(password, user.password))) {
     return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
   }
 
-  // สร้าง Token
+  // สร้าง JWT Token
   const token = jwt.sign({ id: user.id, role: user.role }, SECRET, {
     expiresIn: '1h',
   });
 
+  //ส่ง Token กลับไปยัง Frontend
   return NextResponse.json({ token });
 }
