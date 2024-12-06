@@ -11,6 +11,7 @@ datasource db {
 }
 model User {
   id       String  @id @default(uuid())
+  name     String
   email    String  @unique
   password String
   role     String  // 'admin' or 'user'
@@ -20,7 +21,7 @@ model User {
 model Movie {
   id       String @id @default(uuid())
   title    String
-  year     Int
+  year     Int   
   poster   String
   userId   String
   user     User   @relation(fields: [userId], references: [id])

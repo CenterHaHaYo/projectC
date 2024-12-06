@@ -2,28 +2,61 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import prisma from '@/utils/prisma';
+import { z } from 'zod';
 
-// เปลี่ยนเป็นค่า secret ของคุณ
-// const SECRET = 'your_secret_key'; 
-const SECRET = process.env.SECRET_KEY || 'default_secret'; // ใช้ .env
+ 
+const SECRET_KEY = process.env.SECRET_KEY || 'your_secret_key'; // ใช้ .env
+
+const loginSchema = z.object({
+  email: z.string().email('Please type your Email to be correct'),
+  password: z.string().min(6, 'Password must have at least 6'),
+  name: z.string().min(2, 'Your name must at least 2 letters'),
+  role: z.enum(['user', 'admin']).optional(),
+});
 
 export async function POST(req: Request) {
-  const { email, password } = await req.json();
+  try{
+    /*const bcrypt = require('bcrypt');
+    const hash = await bcrypt.hashSync('password', 10); 
+    console.log(hash);*/
 
-  // ตรวจสอบว่าผู้ใช้มีอยู่ในระบบหรือไม่
-  const user = await prisma.user.findUnique({
+    const body = await req.json();
+    //const { email, password } = await req.json();
+    const { email, password, name, role } = loginSchema.parse(body);
+    
+    const user = await prisma.user.findUnique({
     where: { email },
-  });
-  //ตรวจสอบรหัสผ่าน
-  if (!user || !(await bcrypt.compare(password, user.password))) {
+    });
+
+  
+    /*if (!user || !(await bcrypt.compare(password, user.password))) {
+      console.log(`User not found for email: ${email}`);
     return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
-  }
+    }*/
+    if (!user) {
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    }
 
-  // สร้าง JWT Token
-  const token = jwt.sign({ id: user.id, role: user.role }, SECRET, {
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+     if (!isPasswordValid) {
+      console.log(`Invalid password for user: ${email}`);
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    }   
+
+    
+     const token = jwt.sign({ id: user.id, name: user.name, role: user.role }, SECRET_KEY, {
     expiresIn: '1h',
-  });
+    });
 
-  //ส่ง Token กลับไปยัง Frontend
-  return NextResponse.json({ token });
+  
+    //ส่ง Token กลับไปยัง Frontend
+    return NextResponse.json({ token, name: user.name });
+    }catch (error) {
+      if (error instanceof z.ZodError) {
+        // จัดการข้อผิดพลาดจาก zod
+        return NextResponse.json({ error: error.errors }, { status: 400 });
+      }
+    console.error(error);
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 });
+  }
 }

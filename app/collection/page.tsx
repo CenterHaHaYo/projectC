@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Navbar from '../components/Navbar';
 
 export default function MyCollection() {
   interface Movie {
@@ -9,22 +10,30 @@ export default function MyCollection() {
     poster: string;
     year: number;
   }
-  
+  const [name, setName] = useState('');
   const [movies, setMovies] = useState<Movie[]>([]);
   
   useEffect(() => {
+    const userName = localStorage.getItem('name');
+    setName(userName || 'User');
+
     const fetchMovies = async () => {
       const res = await fetch('/api/movies');
-      const data: Movie[] = await res.json();
-      //const data = await res.json();
+      //const data: Movie[] = await res.json();
+      if (res.ok) {
+      const data = await res.json();
       setMovies(data);
+      }
     };
+
     fetchMovies();
   }, []);
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-      <h1 className="text-3xl font-bold">My Movie Collection</h1>
+      <Navbar />
+      <h1 className="text-2xl font-bold mb-4">Welcome, {name}!</h1>
+      <h2 className="text-3xl font-bold">My Movie Collection</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
         {movies.map((movie) => (
           <div
